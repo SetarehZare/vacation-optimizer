@@ -40,17 +40,22 @@ export default function App() {
     localStorage.setItem('vacopt', JSON.stringify({ country, region, pto, year }));
   }, [country, region, pto, year]);
 
-  // Fetch holidays from backend
+  // In dev the Vite proxy forwards /api/* to the local FastAPI backend.
+  // In production builds we call Nager.Date directly (no backend needed).
+  const holidayUrl = import.meta.env.DEV
+    ? `/api/holidays/${country}/${year}`
+    : `https://date.nager.at/api/v3/PublicHolidays/${year}/${country}`;
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/holidays/${country}/${year}`)
+    fetch(holidayUrl)
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then(data => { if (!cancelled) setHolidays(data); })
       .catch(() => { if (!cancelled) setHolidays([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [country, year]);
+  }, [holidayUrl]);
 
   // Apply accent palette CSS variables
   useEffect(() => {
