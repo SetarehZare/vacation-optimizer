@@ -30,6 +30,9 @@
 | **Package manager** | `uv` (Python), `npm` (JS) |
 
 ---
+<img width="1903" height="1685" alt="screencapture-localhost-5173-2026-05-02-16_11_13" src="https://github.com/user-attachments/assets/5cf3d008-d230-4948-875a-9b3db68a3903" />
+
+---
 
 ## 🚀 Running Locally
 
