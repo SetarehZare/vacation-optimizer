@@ -206,7 +206,7 @@ export default function App() {
         </div>
       )}
 
-      <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={result.windows}/>
+      <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={result.windows} today={today}/>
 
       {tweaks.showWindowCards && (
         <WindowsSection windows={result.windows} dayIdx={result.dayIdx}/>

@@ -2,8 +2,9 @@ import { useMemo, useState, useRef } from 'react';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export default function CalendarHeatmap({ year, dayIdx, windows }) {
+export default function CalendarHeatmap({ year, dayIdx, windows, today }) {
   const [tooltip, setTooltip] = useState(null);
+  const todayISO = today ? `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}` : null;
 
   const windowMap = useMemo(() => {
     const m = {};
@@ -56,6 +57,8 @@ export default function CalendarHeatmap({ year, dayIdx, windows }) {
     if (!info) return 'day-cell placeholder';
     const wm = windowMap[iso];
     const cls = ['day-cell'];
+    if (todayISO && iso < todayISO) cls.push('past');
+    if (todayISO && iso === todayISO) cls.push('today');
     if (info.isHoliday) cls.push('holiday');
     else if (info.isWeekend) cls.push('weekend');
     if (wm) {
