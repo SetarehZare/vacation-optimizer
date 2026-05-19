@@ -9,11 +9,13 @@ const COUNTRY_LIST = Object.keys(COUNTRY_META)
   .map(code => ({ code, ...COUNTRY_META[code] }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 function getInitialState() {
   try {
     const saved = JSON.parse(localStorage.getItem('vacopt') || '{}');
-    return { country: saved.country || 'US', region: saved.region || '', pto: saved.pto || 15, year: saved.year || 2026 };
-  } catch { return { country: 'US', region: '', pto: 15, year: 2026 }; }
+    return { country: saved.country || 'US', region: saved.region || '', pto: saved.pto || 15, year: saved.year || CURRENT_YEAR };
+  } catch { return { country: 'US', region: '', pto: 15, year: CURRENT_YEAR }; }
 }
 
 const TWEAK_DEFAULTS = { accentTone: 'sunset', showStatsCards: true, showWindowCards: true };
@@ -121,8 +123,8 @@ export default function App() {
         </div>
         <div style={{display:'flex', gap:10, alignItems:'center'}}>
           <div className="year-toggle">
-            <button className={year === 2026 ? 'active' : ''} onClick={() => setYear(2026)}>2026</button>
-            <button className={year === 2027 ? 'active' : ''} onClick={() => setYear(2027)}>2027</button>
+            <button className={year === CURRENT_YEAR ? 'active' : ''} onClick={() => setYear(CURRENT_YEAR)}>{CURRENT_YEAR}</button>
+            <button className={year === CURRENT_YEAR + 1 ? 'active' : ''} onClick={() => setYear(CURRENT_YEAR + 1)}>{CURRENT_YEAR + 1}</button>
           </div>
           <button onClick={openTweaks} title="Customise" style={{
             width:36, height:36, borderRadius:10, border:'1px solid var(--line)',
