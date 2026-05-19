@@ -78,7 +78,11 @@ export default function App() {
     if (!regions) setRegion('');
   }, [country]);
 
-  const result = useMemo(() => optimize({ year, holidays, ptoBudget: pto }), [year, holidays, pto]);
+  const today = new Date();
+  const result = useMemo(() => {
+    const isCurrentYear = year === today.getFullYear();
+    return optimize({ year, holidays, ptoBudget: pto, today: isCurrentYear ? today : null });
+  }, [year, holidays, pto]);
 
   const efficiency = result.ptoUsed > 0 ? result.totalDaysOff / result.ptoUsed : 0;
   const pctSlider  = ((pto - 5) / 30) * 100;

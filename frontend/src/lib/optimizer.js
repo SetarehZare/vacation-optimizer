@@ -52,12 +52,12 @@ function expandStretch(list, startIdx, endIdx) {
   return [s, e];
 }
 
-function generateCandidates(dayIdx, maxBudget) {
+function generateCandidates(dayIdx, maxBudget, startFromIdx = 0) {
   const list = dayIdx.list;
   const candidates = [];
   const seen = new Set();
 
-  for (let i = 0; i < list.length; i++) {
+  for (let i = startFromIdx; i < list.length; i++) {
     for (let b = 1; b <= maxBudget; b++) {
       let j = i, used = 0;
       const ptoDays = [];
@@ -154,10 +154,16 @@ function themeFor(totalDays) {
   return                      { key: 'big-trip',      label: 'Big Trip',     emoji: '✈️' };
 }
 
-export function optimize({ year, holidays, ptoBudget }) {
+export function optimize({ year, holidays, ptoBudget, today }) {
   const dayIdx = buildDayIndex(year, holidays);
   const maxPerWindow = Math.min(ptoBudget, Math.max(12, Math.ceil(ptoBudget * 0.8)));
-  const cands = generateCandidates(dayIdx, maxPerWindow);
+  let startFromIdx = 0;
+  if (today) {
+    const todayISO = fmtISO(today);
+    const idx = dayIdx.list.findIndex(d => d.iso >= todayISO);
+    if (idx !== -1) startFromIdx = idx;
+  }
+  const cands = generateCandidates(dayIdx, maxPerWindow, startFromIdx);
   const { picked, ptoUsed } = pickWindowsWithinBudget(cands, ptoBudget, 3);
   return {
     dayIdx,
