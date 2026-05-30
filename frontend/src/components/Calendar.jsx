@@ -78,6 +78,9 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today }) {
           <div className="legend-item"><div className="legend-swatch" style={{background:'var(--hm-holiday)'}}/>Holiday</div>
           <div className="legend-item"><div className="legend-swatch" style={{background:'var(--hm-pto)'}}/>PTO</div>
           <div className="legend-item"><div className="legend-swatch" style={{background:'var(--hm-stretch)', boxShadow:'inset 0 0 0 1.5px var(--sun-deep)'}}/>Stretch</div>
+          {todayISO && todayISO.startsWith(String(year)) && (
+            <div className="legend-item"><div className="legend-swatch" style={{outline:'2.5px solid var(--coral)', outlineOffset:'1px', position:'relative'}}><div style={{position:'absolute',bottom:'10%',left:'50%',transform:'translateX(-50%)',width:'30%',height:'30%',background:'var(--coral)',borderRadius:'50%'}}/></div>Today</div>
+          )}
         </div>
       </div>
 

@@ -109,7 +109,8 @@ input, select { font-family: inherit; }
 .day-cell.window-3 { box-shadow: inset 0 0 0 2px var(--teal); }
 .day-cell.window-1.pto-day, .day-cell.window-2.pto-day, .day-cell.window-3.pto-day { background: var(--hm-pto); }
 .day-cell.past { opacity: 0.28; filter: saturate(0.2); }
-.day-cell.today { outline: 2.5px solid var(--coral); outline-offset: 1px; opacity: 1 !important; filter: none !important; }
+.day-cell.today { outline: 2.5px solid var(--coral); outline-offset: 1px; opacity: 1 !important; filter: none !important; z-index: 2; }
+.day-cell.today::after { content: ''; position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%); width: 30%; height: 30%; background: var(--coral); border-radius: 50%; }
 .day-cell:not(.placeholder):hover { transform: scale(1.4); z-index: 5; box-shadow: 0 6px 16px -4px oklch(0.3 0.05 50 / 0.3); }
 
 /* Tooltip */
