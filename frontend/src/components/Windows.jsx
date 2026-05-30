@@ -2,6 +2,43 @@ import { useState } from 'react';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+function toCalDate(iso) { return iso.replace(/-/g, ''); }
+
+function addOneDay(iso) {
+  const d = new Date(iso + 'T00:00');
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function exportGCal(w) {
+  const title = encodeURIComponent(`🌴 ${w.theme.label} Vacation`);
+  const details = encodeURIComponent(`${w.totalDays} days off · ${w.ptoCost} PTO days · ${w.ratio.toFixed(1)}× efficiency`);
+  const dates = `${toCalDate(w.stretchStart)}/${addOneDay(w.stretchEnd)}`;
+  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`, '_blank');
+}
+
+function exportICS(w) {
+  const title = `🌴 ${w.theme.label} Vacation`;
+  const desc = `${w.totalDays} days off · ${w.ptoCost} PTO days · ${w.ratio.toFixed(1)}x efficiency`;
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Off the Clock//Vacation Optimizer//EN',
+    'BEGIN:VEVENT',
+    `DTSTART;VALUE=DATE:${toCalDate(w.stretchStart)}`,
+    `DTEND;VALUE=DATE:${addOneDay(w.stretchEnd)}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${desc}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `vacation-${w.stretchStart}.ics`; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function fmtDateRange(startISO, endISO) {
   const s = new Date(startISO + 'T00:00');
   const e = new Date(endISO + 'T00:00');
@@ -73,6 +110,19 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle }) {
               {w.theme.key === 'getaway'      && 'A real getaway — enough time to fully disconnect and travel further.'}
               {w.theme.key === 'big-trip'     && 'A big trip window — book that long-haul flight, you have the time.'}
             </p>
+          </div>
+          <div className="detail-section export-row">
+            <h4>Add to calendar</h4>
+            <div className="export-btns">
+              <button className="export-btn gcal" onClick={() => exportGCal(w)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Google Calendar
+              </button>
+              <button className="export-btn ical" onClick={() => exportICS(w)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download .ics
+              </button>
+            </div>
           </div>
         </div>
       )}

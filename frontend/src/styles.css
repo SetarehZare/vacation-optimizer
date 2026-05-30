@@ -153,6 +153,15 @@ input, select { font-family: inherit; }
 .detail-section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--ink-soft); margin: 0 0 8px; }
 .detail-section p { margin: 0; font-size: 13px; line-height: 1.5; }
 
+/* Export buttons */
+.window-detail { grid-template-columns: 1fr; }
+.window-detail .export-row { margin-top: 4px; }
+.export-btns { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.export-btn { display: flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg-card); font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.12s; color: var(--ink); }
+.export-btn:hover { transform: translateY(-1px); }
+.export-btn.gcal:hover { background: oklch(0.95 0.05 145); border-color: oklch(0.65 0.15 145); color: oklch(0.35 0.12 145); }
+.export-btn.ical:hover { background: oklch(0.94 0.04 250); border-color: oklch(0.65 0.12 250); color: oklch(0.35 0.1 250); }
+
 /* Toast */
 .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 14px 22px; border-radius: 14px; font-size: 14px; font-weight: 500; box-shadow: 0 10px 30px -8px oklch(0.2 0.05 50 / 0.4); z-index: 200; animation: toastIn 0.3s ease; }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
