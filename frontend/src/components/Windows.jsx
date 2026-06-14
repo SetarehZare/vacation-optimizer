@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { recommendDestinations, monthName } from '../lib/destinations.js';
+import { COUNTRY_META } from '../lib/countryMeta.js';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -59,7 +61,7 @@ function DayChip({ info, isPto }) {
   );
 }
 
-function WindowCard({ window: w, dayIdx, expanded, onToggle }) {
+function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect }) {
   const tones = ['tone-sun', 'tone-coral', 'tone-teal'];
   const days = [];
   for (let i = w.stretchStartIdx; i <= w.stretchEndIdx; i++) days.push(dayIdx.list[i]);
@@ -67,8 +69,9 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle }) {
   const ratioRound = w.ratio.toFixed(1);
 
   return (
-    <div className={`window-card ${tones[w.rank]} ${expanded ? 'expanded' : ''}`} onClick={onToggle}>
+    <div className={`window-card ${tones[w.rank]} ${expanded ? 'expanded' : ''} ${selected ? 'selected' : ''}`} onClick={onToggle}>
       <div className="rank-pill">#{w.rank + 1}</div>
+      {selected && <div className="picked-badge">✓ Picked</div>}
       <div className="theme-line">
         <span className="theme-emoji">{w.theme.emoji}</span>
         <span>{w.theme.label}</span>
@@ -85,6 +88,9 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle }) {
           <div className="eff-value">{ratioRound}<small>×</small></div>
         </div>
       </div>
+      <button className="pick-trip-btn" onClick={(e) => { e.stopPropagation(); onSelect(); }}>
+        {selected ? '✓ This is my trip' : 'Choose this trip →'}
+      </button>
       {expanded && (
         <div className="window-detail" onClick={e => e.stopPropagation()}>
           <div className="detail-section">
@@ -130,8 +136,56 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle }) {
   );
 }
 
-export default function WindowsSection({ windows, dayIdx }) {
+function DestinationsSection({ window: w, country }) {
+  const [revealed, setRevealed] = useState(false);
+  const month = Number(w.stretchStart.slice(5, 7));
+  const originName = COUNTRY_META[country]?.name || 'your country';
+  const picks = recommendDestinations({ originCountry: country, month });
+
+  return (
+    <div className="destinations-section">
+      <div className="dest-trip-line">
+        <span className="dest-trip-emoji">{w.theme.emoji}</span>
+        <div>
+          <div className="dest-trip-label">Your pick · {fmtDateRange(w.stretchStart, w.stretchEnd)}</div>
+          <div className="dest-trip-sub">{w.totalDays} days off in {monthName(month)}</div>
+        </div>
+      </div>
+
+      {!revealed ? (
+        <button className="dest-reveal-btn" onClick={() => setRevealed(true)}>
+          🌍 Click to see the best destinations for this trip
+        </button>
+      ) : (
+        <>
+          <p className="dest-intro">
+            Top spots for <strong>{monthName(month)}</strong>, popular with travellers from <strong>{originName}</strong>:
+          </p>
+          <div className="dest-grid">
+            {picks.map((d, i) => (
+              <div key={i} className="dest-card">
+                <div className="dest-card-head">
+                  <span className="dest-flag">{d.flag}</span>
+                  <div>
+                    <div className="dest-city">{d.city}</div>
+                    <div className="dest-country">{d.country}</div>
+                  </div>
+                  {d.inSeason && <span className="dest-season">peak season</span>}
+                </div>
+                <div className="dest-vibe">{d.vibe}</div>
+                <p className="dest-blurb">{d.blurb}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function WindowsSection({ windows, dayIdx, country }) {
   const [expanded, setExpanded] = useState(null);
+  const [selected, setSelected] = useState(null);
   if (!windows.length) {
     return (
       <div className="windows-section">
@@ -140,6 +194,7 @@ export default function WindowsSection({ windows, dayIdx }) {
       </div>
     );
   }
+  const selectedWindow = windows.find(w => w.rank === selected) || null;
   return (
     <div className="windows-section">
       <div className="windows-header">
@@ -151,9 +206,12 @@ export default function WindowsSection({ windows, dayIdx }) {
           <WindowCard key={w.rank} window={w} dayIdx={dayIdx}
             expanded={expanded === w.rank}
             onToggle={() => setExpanded(expanded === w.rank ? null : w.rank)}
+            selected={selected === w.rank}
+            onSelect={() => setSelected(selected === w.rank ? null : w.rank)}
           />
         ))}
       </div>
+      {selectedWindow && <DestinationsSection window={selectedWindow} country={country}/>}
     </div>
   );
 }

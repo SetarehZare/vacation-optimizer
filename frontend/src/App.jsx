@@ -211,7 +211,7 @@ export default function App() {
       <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={result.windows} today={today}/>
 
       {tweaks.showWindowCards && (
-        <WindowsSection windows={result.windows} dayIdx={result.dayIdx}/>
+        <WindowsSection windows={result.windows} dayIdx={result.dayIdx} country={country}/>
       )}
 
       <TweaksPanel title="Tweaks">
