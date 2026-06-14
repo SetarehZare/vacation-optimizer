@@ -136,7 +136,7 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect 
   );
 }
 
-function DestinationsSection({ window: w, country }) {
+export function DestinationsSection({ trip: w, country }) {
   const [revealed, setRevealed] = useState(false);
   const month = Number(w.stretchStart.slice(5, 7));
   const originName = COUNTRY_META[country]?.name || 'your country';
@@ -147,8 +147,14 @@ function DestinationsSection({ window: w, country }) {
       <div className="dest-trip-line">
         <span className="dest-trip-emoji">{w.theme.emoji}</span>
         <div>
-          <div className="dest-trip-label">Your pick · {fmtDateRange(w.stretchStart, w.stretchEnd)}</div>
+          <div className="dest-trip-label">
+            {w.source === 'custom' ? 'Your dates' : 'Your pick'} · {fmtDateRange(w.stretchStart, w.stretchEnd)}
+          </div>
           <div className="dest-trip-sub">{w.totalDays} days off in {monthName(month)}</div>
+        </div>
+        <div className="dest-export-mini">
+          <button className="export-btn gcal" onClick={() => exportGCal(w)}>＋ Google Cal</button>
+          <button className="export-btn ical" onClick={() => exportICS(w)}>⬇ .ics</button>
         </div>
       </div>
 
@@ -183,9 +189,8 @@ function DestinationsSection({ window: w, country }) {
   );
 }
 
-export default function WindowsSection({ windows, dayIdx, country }) {
+export default function WindowsSection({ windows, dayIdx, selectedTrip, onPickWindow }) {
   const [expanded, setExpanded] = useState(null);
-  const [selected, setSelected] = useState(null);
   if (!windows.length) {
     return (
       <div className="windows-section">
@@ -194,7 +199,8 @@ export default function WindowsSection({ windows, dayIdx, country }) {
       </div>
     );
   }
-  const selectedWindow = windows.find(w => w.rank === selected) || null;
+  const isPicked = (w) => selectedTrip &&
+    selectedTrip.stretchStart === w.stretchStart && selectedTrip.stretchEnd === w.stretchEnd;
   return (
     <div className="windows-section">
       <div className="windows-header">
@@ -206,12 +212,11 @@ export default function WindowsSection({ windows, dayIdx, country }) {
           <WindowCard key={w.rank} window={w} dayIdx={dayIdx}
             expanded={expanded === w.rank}
             onToggle={() => setExpanded(expanded === w.rank ? null : w.rank)}
-            selected={selected === w.rank}
-            onSelect={() => setSelected(selected === w.rank ? null : w.rank)}
+            selected={isPicked(w)}
+            onSelect={() => onPickWindow(w)}
           />
         ))}
       </div>
-      {selectedWindow && <DestinationsSection window={selectedWindow} country={country}/>}
     </div>
   );
 }

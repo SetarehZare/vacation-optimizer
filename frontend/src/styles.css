@@ -108,7 +108,22 @@ input, select { font-family: inherit; }
 .day-cell.window-2 { box-shadow: inset 0 0 0 2px var(--coral); }
 .day-cell.window-3 { box-shadow: inset 0 0 0 2px var(--teal); }
 .day-cell.window-1.pto-day, .day-cell.window-2.pto-day, .day-cell.window-3.pto-day { background: var(--hm-pto); }
-.day-cell.past { opacity: 0.28; filter: saturate(0.2); }
+.day-cell.past { opacity: 0.28; filter: saturate(0.2); pointer-events: none; }
+.day-cell.selected-range { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.day-cell.sel-end { background: var(--ink) !important; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.day-cell.sel-end::after { display: none !important; }
+
+/* Calendar pick hint bar */
+.cal-pick-hint { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-soft); margin: 0 0 12px; flex-wrap: wrap; }
+.cal-pick-hint b { color: var(--ink); font-weight: 700; }
+.pick-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-mute); flex-shrink: 0; }
+.pick-dot.done { background: var(--ink); }
+.pick-dot.pulsing { background: var(--coral); animation: pickPulse 1s ease-in-out infinite; }
+@keyframes pickPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.pick-clear { margin-left: 4px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-card); font-size: 11px; font-weight: 600; cursor: pointer; color: var(--ink); }
+.pick-clear:hover { background: var(--bg-soft); }
+.dest-export-mini { margin-left: auto; display: flex; gap: 8px; }
+.dest-export-mini .export-btn { padding: 7px 12px; font-size: 12px; }
 .day-cell.today { outline: 2.5px solid var(--coral); outline-offset: 1px; opacity: 1 !important; filter: none !important; z-index: 2; }
 .day-cell.today::after { content: ''; position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%); width: 30%; height: 30%; background: var(--coral); border-radius: 50%; }
 .day-cell:not(.placeholder):hover { transform: scale(1.4); z-index: 5; box-shadow: 0 6px 16px -4px oklch(0.3 0.05 50 / 0.3); }

@@ -2,9 +2,34 @@ import { useMemo, useState, useRef } from 'react';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export default function CalendarHeatmap({ year, dayIdx, windows, today }) {
+export default function CalendarHeatmap({ year, dayIdx, windows, today, selectedTrip, onSelectRange, onClearSelection }) {
   const [tooltip, setTooltip] = useState(null);
+  const [pendingStart, setPendingStart] = useState(null);
   const todayISO = today ? `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}` : null;
+
+  function handleClick(iso) {
+    const info = dayIdx.map[iso];
+    if (!info) return;
+    if (todayISO && iso < todayISO) return; // can't pick days in the past
+    if (!pendingStart) {
+      onClearSelection && onClearSelection();
+      setPendingStart(iso);
+    } else {
+      const [a, b] = pendingStart <= iso ? [pendingStart, iso] : [iso, pendingStart];
+      onSelectRange && onSelectRange(a, b);
+      setPendingStart(null);
+    }
+  }
+
+  function clearSelection() {
+    setPendingStart(null);
+    onClearSelection && onClearSelection();
+  }
+
+  function fmtLong(iso) {
+    const d = new Date(iso + 'T00:00');
+    return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  }
 
   const windowMap = useMemo(() => {
     const m = {};
@@ -66,6 +91,12 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today }) {
       if (wm.isPto) cls.push('pto-day');
       if (wm.windowRank) cls.push(`window-${wm.windowRank}`);
     }
+    if (pendingStart === iso) {
+      cls.push('sel-end');
+    } else if (selectedTrip && iso >= selectedTrip.stretchStart && iso <= selectedTrip.stretchEnd) {
+      cls.push('selected-range');
+      if (iso === selectedTrip.stretchStart || iso === selectedTrip.stretchEnd) cls.push('sel-end');
+    }
     return cls.join(' ');
   }
 
@@ -84,6 +115,17 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today }) {
         </div>
       </div>
 
+      <div className="cal-pick-hint">
+        {pendingStart ? (
+          <><span className="pick-dot pulsing"/>Now click the <b>end day</b> of your trip (start: {fmtLong(pendingStart)})</>
+        ) : selectedTrip ? (
+          <><span className="pick-dot done"/>Your dates: <b>{fmtLong(selectedTrip.stretchStart)} – {fmtLong(selectedTrip.stretchEnd)}</b>
+            <button className="pick-clear" onClick={clearSelection}>Clear</button></>
+        ) : (
+          <><span className="pick-dot"/>Pick your own dates: click a <b>start day</b>, then an <b>end day</b></>
+        )}
+      </div>
+
       <div className="year-grid">
         {MONTHS.map((m, mi) => {
           const daysInMonth = new Date(year, mi + 1, 0).getDate();
@@ -97,6 +139,7 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today }) {
                 <div key={d} className={cellClass(iso)}
                   onMouseEnter={(e) => handleHover(e, iso)}
                   onMouseLeave={() => setTooltip(null)}
+                  onClick={() => handleClick(iso)}
                 />
               );
             }

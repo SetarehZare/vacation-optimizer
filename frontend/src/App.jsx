@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import CalendarHeatmap from './components/Calendar.jsx';
-import WindowsSection from './components/Windows.jsx';
+import WindowsSection, { DestinationsSection } from './components/Windows.jsx';
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle } from './tweaks-panel.jsx';
-import { optimize } from './lib/optimizer.js';
+import { optimize, themeFor } from './lib/optimizer.js';
 import { COUNTRY_META } from './lib/countryMeta.js';
 
 const COUNTRY_LIST = Object.keys(COUNTRY_META)
@@ -37,6 +37,7 @@ export default function App() {
   const [tweaks,  setTweak]   = useTweaks(TWEAK_DEFAULTS);
   const [holidays, setHolidays] = useState([]);
   const [loading,  setLoading]  = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('vacopt', JSON.stringify({ country, region, pto, year }));
@@ -88,6 +89,31 @@ export default function App() {
 
   const efficiency = result.ptoUsed > 0 ? result.totalDaysOff / result.ptoUsed : 0;
   const pctSlider  = ((pto - 5) / 30) * 100;
+
+  // Clear any picked trip when the calendar year changes (dates no longer apply).
+  useEffect(() => { setSelectedTrip(null); }, [year]);
+
+  // Build a trip object from a custom date range chosen on the calendar.
+  function selectCustomRange(startISO, endISO) {
+    const list = result.dayIdx.list;
+    const sIdx = list.findIndex(d => d.iso === startISO);
+    const eIdx = list.findIndex(d => d.iso === endISO);
+    if (sIdx === -1 || eIdx === -1) return;
+    let totalDays = 0, ptoCost = 0;
+    for (let i = sIdx; i <= eIdx; i++) { totalDays++; if (!list[i].isOff) ptoCost++; }
+    setSelectedTrip({
+      stretchStart: startISO, stretchEnd: endISO, totalDays, ptoCost,
+      theme: themeFor(totalDays), ratio: ptoCost > 0 ? totalDays / ptoCost : totalDays,
+      source: 'custom',
+    });
+  }
+
+  // Pick one of the suggested windows (toggles off if already picked).
+  function pickWindow(w) {
+    setSelectedTrip(prev =>
+      prev && prev.stretchStart === w.stretchStart && prev.stretchEnd === w.stretchEnd
+        ? null : { ...w, source: 'window' });
+  }
 
   function handleShare() {
     const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -208,10 +234,19 @@ export default function App() {
         </div>
       )}
 
-      <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={result.windows} today={today}/>
+      <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={result.windows} today={today}
+        selectedTrip={selectedTrip}
+        onSelectRange={selectCustomRange}
+        onClearSelection={() => setSelectedTrip(null)}/>
 
       {tweaks.showWindowCards && (
-        <WindowsSection windows={result.windows} dayIdx={result.dayIdx} country={country}/>
+        <WindowsSection windows={result.windows} dayIdx={result.dayIdx}
+          selectedTrip={selectedTrip} onPickWindow={pickWindow}/>
+      )}
+
+      {selectedTrip && (
+        <DestinationsSection key={selectedTrip.stretchStart + selectedTrip.stretchEnd}
+          trip={selectedTrip} country={country}/>
       )}
 
       <TweaksPanel title="Tweaks">
