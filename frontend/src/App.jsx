@@ -37,9 +37,9 @@ export default function App() {
   const [tweaks,  setTweak]   = useTweaks(TWEAK_DEFAULTS);
   const [holidays, setHolidays] = useState([]);
   const [loading,  setLoading]  = useState(false);
-  const [customRange, setCustomRange] = useState(null);  // { start, end } ISO
+  const [customPicks, setCustomPicks] = useState([]);    // [{ start, end }] ISO ranges
   const [selectedKey, setSelectedKey] = useState(null);  // which card is picked for destinations
-  const [viewMode, setViewMode] = useState('plan');      // 'plan' | 'all'
+  const [viewMode, setViewMode] = useState('plan');      // 'plan' | 'all' | 'custom'
 
   useEffect(() => {
     localStorage.setItem('vacopt', JSON.stringify({ country, region, pto, year }));
@@ -101,47 +101,55 @@ export default function App() {
 
   const keyOf = (w) => `${w.stretchStart}_${w.stretchEnd}`;
 
-  // Build a full window object from the user's custom date range — same shape
-  // as the optimizer's suggested windows, so it gets coloured and carded the
-  // exact same way (weekends, holidays, PTO, stretch, ratio, theme).
-  const customWindow = useMemo(() => {
-    if (!customRange) return null;
+  // Build full window objects from the user's custom date ranges — same shape as
+  // the optimizer's windows, so they get coloured/carded the exact same way
+  // (weekends, holidays, PTO, stretch, ratio, theme).
+  const customWindows = useMemo(() => {
     const list = result.dayIdx.list;
-    const sIdx = list.findIndex(d => d.iso === customRange.start);
-    const eIdx = list.findIndex(d => d.iso === customRange.end);
-    if (sIdx === -1 || eIdx === -1) return null;
-    const ptoDays = [];
-    for (let i = sIdx; i <= eIdx; i++) if (!list[i].isOff) ptoDays.push(list[i].iso);
-    const totalDays = eIdx - sIdx + 1;
-    const ptoCost = ptoDays.length;
-    return {
-      stretchStartIdx: sIdx, stretchEndIdx: eIdx,
-      stretchStart: list[sIdx].iso, stretchEnd: list[eIdx].iso,
-      ptoDays, totalDays, ptoCost,
-      ratio: ptoCost > 0 ? totalDays / ptoCost : totalDays,
-      theme: themeFor(totalDays), source: 'custom', colorKey: 'custom', rank: 'custom',
-    };
-  }, [customRange, result]);
+    return customPicks.map(({ start, end }) => {
+      const sIdx = list.findIndex(d => d.iso === start);
+      const eIdx = list.findIndex(d => d.iso === end);
+      if (sIdx === -1 || eIdx === -1) return null;
+      const ptoDays = [];
+      for (let i = sIdx; i <= eIdx; i++) if (!list[i].isOff) ptoDays.push(list[i].iso);
+      const totalDays = eIdx - sIdx + 1;
+      const ptoCost = ptoDays.length;
+      return {
+        stretchStartIdx: sIdx, stretchEndIdx: eIdx,
+        stretchStart: list[sIdx].iso, stretchEnd: list[eIdx].iso,
+        ptoDays, totalDays, ptoCost,
+        ratio: ptoCost > 0 ? totalDays / ptoCost : totalDays,
+        theme: themeFor(totalDays), source: 'custom', colorKey: 'custom',
+      };
+    }).filter(Boolean);
+  }, [customPicks, result]);
 
-  // Custom pick first, then the windows for the current view mode. Colours cycle
-  // through the three accent tones so longer lists stay readable.
+  // The windows shown (calendar + cards) depend on the active view mode.
   const allWindows = useMemo(() => {
-    const base = (viewMode === 'all' ? opportunities : result.windows)
+    if (viewMode === 'custom') {
+      return customWindows.map((w, i) => ({ ...w, pill: `✏️ #${i + 1}` }));
+    }
+    // 'plan' / 'all' — colours cycle through the three accent tones.
+    return (viewMode === 'all' ? opportunities : result.windows)
       .map((w, i) => ({ ...w, colorKey: (i % 3) + 1, pill: `#${i + 1}`, source: 'suggested' }));
-    return customWindow ? [{ ...customWindow, pill: '★ Custom' }, ...base] : base;
-  }, [result, opportunities, viewMode, customWindow]);
+  }, [result, opportunities, viewMode, customWindows]);
 
   const selectedTrip = allWindows.find(w => keyOf(w) === selectedKey) || null;
 
   // Reset everything when the calendar year changes (dates no longer apply).
-  useEffect(() => { setCustomRange(null); setSelectedKey(null); }, [year]);
+  useEffect(() => { setCustomPicks([]); setSelectedKey(null); }, [year]);
 
-  // Calendar range selection → create the custom window and pick it for destinations.
-  function selectCustomRange(start, end) {
-    setCustomRange({ start, end });
+  // Calendar range selection → add a custom pick, select it, and switch to the
+  // "My picks" tab so the user sees it land.
+  function addCustomPick(start, end) {
+    setCustomPicks(prev => prev.some(p => p.start === start && p.end === end) ? prev : [...prev, { start, end }]);
     setSelectedKey(`${start}_${end}`);
+    setViewMode('custom');
   }
-  function clearCustom() { setCustomRange(null); setSelectedKey(null); }
+  function removeCustomPick(w) {
+    setCustomPicks(prev => prev.filter(p => !(p.start === w.stretchStart && p.end === w.stretchEnd)));
+  }
+  function clearAllCustom() { setCustomPicks([]); }
 
   // Pick any card (suggested or custom) to show its destinations (toggles off).
   function pickWindow(w) {
@@ -268,15 +276,25 @@ export default function App() {
         </div>
       )}
 
+      <div className="view-toggle-bar">
+        <div className="mode-toggle">
+          <button className={viewMode === 'plan' ? 'active' : ''} onClick={() => setViewMode('plan')}>💼 Best plan</button>
+          <button className={viewMode === 'all' ? 'active' : ''} onClick={() => setViewMode('all')}>🗓️ All opportunities</button>
+          <button className={viewMode === 'custom' ? 'active' : ''} onClick={() => setViewMode('custom')}>
+            ✏️ My picks{customPicks.length ? ` (${customPicks.length})` : ''}
+          </button>
+        </div>
+      </div>
+
       <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={allWindows} today={today}
-        customRange={customRange}
-        onSelectRange={selectCustomRange}
-        onClearSelection={clearCustom}/>
+        customCount={customPicks.length}
+        onSelectRange={addCustomPick}
+        onClearAll={clearAllCustom}/>
 
       {tweaks.showWindowCards && (
         <WindowsSection windows={allWindows} dayIdx={result.dayIdx}
           selectedKey={selectedKey} keyOf={keyOf} onPickWindow={pickWindow}
-          viewMode={viewMode} onModeChange={setViewMode}/>
+          onRemoveWindow={removeCustomPick} viewMode={viewMode}/>
       )}
 
       {selectedTrip && (

@@ -2,7 +2,7 @@ import { useMemo, useState, useRef } from 'react';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export default function CalendarHeatmap({ year, dayIdx, windows, today, customRange, onSelectRange, onClearSelection }) {
+export default function CalendarHeatmap({ year, dayIdx, windows, today, customCount, onSelectRange, onClearAll }) {
   const [tooltip, setTooltip] = useState(null);
   const [pendingStart, setPendingStart] = useState(null);
   const todayISO = today ? `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}` : null;
@@ -12,7 +12,6 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today, customRa
     if (!info) return;
     if (todayISO && iso < todayISO) return; // can't pick days in the past
     if (!pendingStart) {
-      onClearSelection && onClearSelection();
       setPendingStart(iso);
     } else {
       const [a, b] = pendingStart <= iso ? [pendingStart, iso] : [iso, pendingStart];
@@ -21,9 +20,9 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today, customRa
     }
   }
 
-  function clearSelection() {
+  function clearAll() {
     setPendingStart(null);
-    onClearSelection && onClearSelection();
+    onClearAll && onClearAll();
   }
 
   function fmtLong(iso) {
@@ -115,9 +114,9 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today, customRa
       <div className="cal-pick-hint">
         {pendingStart ? (
           <><span className="pick-dot pulsing"/>Now click the <b>end day</b> of your trip (start: {fmtLong(pendingStart)})</>
-        ) : customRange ? (
-          <><span className="pick-dot done"/>Your custom pick: <b>{fmtLong(customRange.start)} – {fmtLong(customRange.end)}</b>
-            <button className="pick-clear" onClick={clearSelection}>Clear</button></>
+        ) : customCount > 0 ? (
+          <><span className="pick-dot done"/><b>{customCount}</b> custom pick{customCount > 1 ? 's' : ''} added — see them in <b>✏️ My picks</b>. Click two more days to add another.
+            <button className="pick-clear" onClick={clearAll}>Clear all</button></>
         ) : (
           <><span className="pick-dot"/>Pick your own dates: click a <b>start day</b>, then an <b>end day</b></>
         )}

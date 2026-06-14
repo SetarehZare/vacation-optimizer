@@ -63,7 +63,7 @@ function DayChip({ info, isPto }) {
 
 const TONE_BY_KEY = { 1: 'tone-sun', 2: 'tone-coral', 3: 'tone-teal', custom: 'tone-custom' };
 
-function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect }) {
+function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect, onRemove }) {
   const isCustom = w.source === 'custom';
   const toneClass = TONE_BY_KEY[w.colorKey] || 'tone-sun';
   const days = [];
@@ -94,6 +94,11 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect 
       <button className="pick-trip-btn" onClick={(e) => { e.stopPropagation(); onSelect(); }}>
         {selected ? '✓ This is my trip' : 'Choose this trip →'}
       </button>
+      {onRemove && (
+        <button className="remove-pick-btn" onClick={(e) => { e.stopPropagation(); onRemove(); }}>
+          Remove pick
+        </button>
+      )}
       {expanded && (
         <div className="window-detail" onClick={e => e.stopPropagation()}>
           <div className="detail-section">
@@ -249,20 +254,19 @@ export function DestinationsSection({ trip: w, country }) {
   );
 }
 
-export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, onPickWindow, viewMode, onModeChange }) {
+const HEADINGS = { plan: 'Top vacation windows', all: 'All vacation opportunities', custom: 'My custom picks' };
+
+export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, onPickWindow, onRemoveWindow, viewMode }) {
   const [expanded, setExpanded] = useState(null);
-  const ModeToggle = onModeChange && (
-    <div className="mode-toggle">
-      <button className={viewMode === 'plan' ? 'active' : ''} onClick={() => onModeChange('plan')}>💼 Best plan</button>
-      <button className={viewMode === 'all' ? 'active' : ''} onClick={() => onModeChange('all')}>🗓️ All opportunities</button>
-    </div>
-  );
-  const heading = viewMode === 'all' ? 'All vacation opportunities' : 'Top vacation windows';
+  const heading = HEADINGS[viewMode] || HEADINGS.plan;
   if (!windows.length) {
+    const msg = viewMode === 'custom'
+      ? 'No custom picks yet — click a start day then an end day on the calendar above to add your own.'
+      : 'No qualifying windows for this PTO budget — try increasing your days.';
     return (
       <div className="windows-section">
-        <div className="windows-header"><h2>{heading}</h2>{ModeToggle}</div>
-        <div className="empty-msg">No qualifying windows for this PTO budget — try increasing your days.</div>
+        <div className="windows-header"><h2>{heading}</h2></div>
+        <div className="empty-msg">{msg}</div>
       </div>
     );
   }
@@ -270,7 +274,7 @@ export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, on
     <div className="windows-section">
       <div className="windows-header">
         <h2>{heading}</h2>
-        {ModeToggle}
+        <span style={{fontSize:13, color:'var(--ink-mute)'}}>Click any card for breakdown</span>
       </div>
       <div className="windows-grid">
         {windows.map(w => {
@@ -281,6 +285,7 @@ export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, on
               onToggle={() => setExpanded(expanded === k ? null : k)}
               selected={selectedKey === k}
               onSelect={() => onPickWindow(w)}
+              onRemove={w.source === 'custom' ? () => onRemoveWindow(w) : null}
             />
           );
         })}
