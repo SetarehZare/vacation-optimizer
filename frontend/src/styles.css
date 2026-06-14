@@ -188,6 +188,15 @@ input, select { font-family: inherit; }
 .dest-blurb { font-size: 13px; line-height: 1.45; color: var(--ink); margin: 0; }
 @media (max-width: 720px) { .dest-grid { grid-template-columns: 1fr; } }
 
+/* AI ideas */
+.ai-badge { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; background: linear-gradient(120deg, var(--plum), var(--coral)); color: white; padding: 2px 8px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
+.dest-card.ai { border-color: color-mix(in oklab, var(--plum) 35%, var(--line)); background: color-mix(in oklab, var(--plum) 5%, var(--bg-soft)); }
+.ai-more-row { display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+.ai-more-btn { padding: 11px 20px; border-radius: 12px; border: 1.5px solid transparent; background: linear-gradient(120deg, var(--plum), var(--coral)); color: white; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.12s, opacity 0.15s; }
+.ai-more-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.ai-more-btn:disabled { opacity: 0.6; cursor: progress; }
+.ai-error { font-size: 12.5px; color: var(--coral); }
+
 .window-detail { margin-top: 18px; padding-top: 18px; border-top: 1px solid oklch(0.5 0.04 60 / 0.15); display: grid; grid-template-columns: 2fr 1fr; gap: 28px; }
 .detail-days { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .detail-day { padding: 8px 12px; border-radius: 12px; background: var(--bg-card); font-size: 12px; display: flex; align-items: center; gap: 8px; font-weight: 500; }

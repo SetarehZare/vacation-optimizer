@@ -140,9 +140,36 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect 
 
 export function DestinationsSection({ trip: w, country }) {
   const [revealed, setRevealed] = useState(false);
+  const [aiIdeas, setAiIdeas] = useState(null);
+  const [aiState, setAiState] = useState('idle'); // idle | loading | error
+  const [aiError, setAiError] = useState('');
   const month = Number(w.stretchStart.slice(5, 7));
   const originName = COUNTRY_META[country]?.name || 'your country';
   const picks = recommendDestinations({ originCountry: country, month, tripDays: w.totalDays });
+
+  async function getAiIdeas() {
+    setAiState('loading');
+    setAiError('');
+    try {
+      const resp = await fetch('/api/destinations', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          countryName: originName,
+          monthName: monthName(month),
+          tripDays: w.totalDays,
+          existing: picks.map(p => p.city),
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `Request failed (${resp.status})`);
+      setAiIdeas(data.ideas || []);
+      setAiState('idle');
+    } catch (err) {
+      setAiError(String(err.message || err));
+      setAiState('error');
+    }
+  }
 
   return (
     <div className="destinations-section">
@@ -184,6 +211,36 @@ export function DestinationsSection({ trip: w, country }) {
                 <p className="dest-blurb">{d.blurb}</p>
               </div>
             ))}
+          </div>
+
+          {aiIdeas && aiIdeas.length > 0 && (
+            <>
+              <p className="dest-intro" style={{marginTop:20}}>
+                <span className="ai-badge">✨ AI</span> More ideas, generated for your trip:
+              </p>
+              <div className="dest-grid">
+                {aiIdeas.map((d, i) => (
+                  <div key={i} className="dest-card ai">
+                    <div className="dest-card-head">
+                      <span className="dest-flag">{d.flag || '🌍'}</span>
+                      <div>
+                        <div className="dest-city">{d.city}</div>
+                        <div className="dest-country">{d.country}</div>
+                      </div>
+                    </div>
+                    {d.vibe && <div className="dest-vibe">{d.vibe}</div>}
+                    <p className="dest-blurb">{d.why}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="ai-more-row">
+            <button className="ai-more-btn" onClick={getAiIdeas} disabled={aiState === 'loading'}>
+              {aiState === 'loading' ? 'Thinking…' : aiIdeas ? '✨ Get more AI ideas' : '✨ Get more ideas with AI'}
+            </button>
+            {aiState === 'error' && <span className="ai-error">{aiError}</span>}
           </div>
         </>
       )}
