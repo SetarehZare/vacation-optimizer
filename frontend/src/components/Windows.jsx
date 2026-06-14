@@ -142,7 +142,7 @@ export function DestinationsSection({ trip: w, country }) {
   const [revealed, setRevealed] = useState(false);
   const month = Number(w.stretchStart.slice(5, 7));
   const originName = COUNTRY_META[country]?.name || 'your country';
-  const picks = recommendDestinations({ originCountry: country, month });
+  const picks = recommendDestinations({ originCountry: country, month, tripDays: w.totalDays });
 
   return (
     <div className="destinations-section">
@@ -178,7 +178,7 @@ export function DestinationsSection({ trip: w, country }) {
                     <div className="dest-city">{d.city}</div>
                     <div className="dest-country">{d.country}</div>
                   </div>
-                  {d.inSeason && <span className="dest-season">peak season</span>}
+                  {d.reason && <span className={`dest-season${d.reason !== 'peak season' ? ' alt' : ''}`}>{d.reason}</span>}
                 </div>
                 <div className="dest-vibe">{d.vibe}</div>
                 <p className="dest-blurb">{d.blurb}</p>

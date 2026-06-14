@@ -182,7 +182,8 @@ input, select { font-family: inherit; }
 .dest-flag { font-size: 26px; }
 .dest-city { font-family: 'Bricolage Grotesque',serif; font-size: 16px; font-weight: 700; line-height: 1.1; }
 .dest-country { font-size: 12px; color: var(--ink-mute); }
-.dest-season { margin-left: auto; align-self: flex-start; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: var(--coral); color: white; padding: 3px 8px; border-radius: 999px; }
+.dest-season { margin-left: auto; align-self: flex-start; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: var(--coral); color: white; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.dest-season.alt { background: var(--teal); color: var(--ink); }
 .dest-vibe { font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
 .dest-blurb { font-size: 13px; line-height: 1.45; color: var(--ink); margin: 0; }
 @media (max-width: 720px) { .dest-grid { grid-template-columns: 1fr; } }
