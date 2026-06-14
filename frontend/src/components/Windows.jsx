@@ -61,10 +61,11 @@ function DayChip({ info, isPto }) {
   );
 }
 
+const TONE_BY_KEY = { 1: 'tone-sun', 2: 'tone-coral', 3: 'tone-teal', custom: 'tone-custom' };
+
 function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect }) {
-  const tones = ['tone-sun', 'tone-coral', 'tone-teal'];
   const isCustom = w.source === 'custom';
-  const toneClass = isCustom ? 'tone-custom' : tones[w.rank];
+  const toneClass = TONE_BY_KEY[w.colorKey] || 'tone-sun';
   const days = [];
   for (let i = w.stretchStartIdx; i <= w.stretchEndIdx; i++) days.push(dayIdx.list[i]);
   const ptoSet = new Set(w.ptoDays);
@@ -72,7 +73,7 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect 
 
   return (
     <div className={`window-card ${toneClass} ${expanded ? 'expanded' : ''} ${selected ? 'selected' : ''}`} onClick={onToggle}>
-      <div className="rank-pill">{isCustom ? '★ Custom' : `#${w.rank + 1}`}</div>
+      <div className="rank-pill">{w.pill}</div>
       {selected && <div className="picked-badge">✓ Picked</div>}
       <div className="theme-line">
         <span className="theme-emoji">{w.theme.emoji}</span>
@@ -248,12 +249,19 @@ export function DestinationsSection({ trip: w, country }) {
   );
 }
 
-export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, onPickWindow }) {
+export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, onPickWindow, viewMode, onModeChange }) {
   const [expanded, setExpanded] = useState(null);
+  const ModeToggle = onModeChange && (
+    <div className="mode-toggle">
+      <button className={viewMode === 'plan' ? 'active' : ''} onClick={() => onModeChange('plan')}>💼 Best plan</button>
+      <button className={viewMode === 'all' ? 'active' : ''} onClick={() => onModeChange('all')}>🗓️ All opportunities</button>
+    </div>
+  );
+  const heading = viewMode === 'all' ? 'All vacation opportunities' : 'Top vacation windows';
   if (!windows.length) {
     return (
       <div className="windows-section">
-        <div className="windows-header"><h2>Top vacation windows</h2></div>
+        <div className="windows-header"><h2>{heading}</h2>{ModeToggle}</div>
         <div className="empty-msg">No qualifying windows for this PTO budget — try increasing your days.</div>
       </div>
     );
@@ -261,8 +269,8 @@ export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, on
   return (
     <div className="windows-section">
       <div className="windows-header">
-        <h2>Top vacation windows</h2>
-        <span style={{fontSize:13, color:'var(--ink-mute)'}}>Click any card for breakdown</span>
+        <h2>{heading}</h2>
+        {ModeToggle}
       </div>
       <div className="windows-grid">
         {windows.map(w => {

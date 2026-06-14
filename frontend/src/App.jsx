@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import CalendarHeatmap from './components/Calendar.jsx';
 import WindowsSection, { DestinationsSection } from './components/Windows.jsx';
 import { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle } from './tweaks-panel.jsx';
-import { optimize, themeFor } from './lib/optimizer.js';
+import { optimize, findAllWindows, themeFor } from './lib/optimizer.js';
 import { COUNTRY_META } from './lib/countryMeta.js';
 
 const COUNTRY_LIST = Object.keys(COUNTRY_META)
@@ -39,6 +39,7 @@ export default function App() {
   const [loading,  setLoading]  = useState(false);
   const [customRange, setCustomRange] = useState(null);  // { start, end } ISO
   const [selectedKey, setSelectedKey] = useState(null);  // which card is picked for destinations
+  const [viewMode, setViewMode] = useState('plan');      // 'plan' | 'all'
 
   useEffect(() => {
     localStorage.setItem('vacopt', JSON.stringify({ country, region, pto, year }));
@@ -88,6 +89,13 @@ export default function App() {
     return optimize({ year, holidays, ptoBudget: pto, today: isCurrentYear ? today : null });
   }, [year, holidays, pto]);
 
+  // All year-round opportunities (browse mode) — computed only when needed.
+  const opportunities = useMemo(() => {
+    if (viewMode !== 'all') return result.windows;
+    const isCurrentYear = year === today.getFullYear();
+    return findAllWindows({ year, holidays, ptoBudget: pto, today: isCurrentYear ? today : null }).windows;
+  }, [viewMode, year, holidays, pto, result]);
+
   const efficiency = result.ptoUsed > 0 ? result.totalDaysOff / result.ptoUsed : 0;
   const pctSlider  = ((pto - 5) / 30) * 100;
 
@@ -115,11 +123,13 @@ export default function App() {
     };
   }, [customRange, result]);
 
-  // Custom pick first, then the three suggested windows.
+  // Custom pick first, then the windows for the current view mode. Colours cycle
+  // through the three accent tones so longer lists stay readable.
   const allWindows = useMemo(() => {
-    const suggested = result.windows.map(w => ({ ...w, colorKey: w.rank + 1, source: 'suggested' }));
-    return customWindow ? [customWindow, ...suggested] : suggested;
-  }, [result, customWindow]);
+    const base = (viewMode === 'all' ? opportunities : result.windows)
+      .map((w, i) => ({ ...w, colorKey: (i % 3) + 1, pill: `#${i + 1}`, source: 'suggested' }));
+    return customWindow ? [{ ...customWindow, pill: '★ Custom' }, ...base] : base;
+  }, [result, opportunities, viewMode, customWindow]);
 
   const selectedTrip = allWindows.find(w => keyOf(w) === selectedKey) || null;
 
@@ -265,7 +275,8 @@ export default function App() {
 
       {tweaks.showWindowCards && (
         <WindowsSection windows={allWindows} dayIdx={result.dayIdx}
-          selectedKey={selectedKey} keyOf={keyOf} onPickWindow={pickWindow}/>
+          selectedKey={selectedKey} keyOf={keyOf} onPickWindow={pickWindow}
+          viewMode={viewMode} onModeChange={setViewMode}/>
       )}
 
       {selectedTrip && (

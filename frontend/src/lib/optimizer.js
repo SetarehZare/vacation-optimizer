@@ -173,4 +173,40 @@ export function optimize({ year, holidays, ptoBudget, today }) {
   };
 }
 
+// Every efficient, non-overlapping vacation window across the whole year, where
+// each window is individually affordable within the PTO budget. Unlike optimize(),
+// this is NOT capped at 3 and does NOT spend a total budget — it's a "browse all
+// your options" view so the user can pick windows that actually fit their life.
+export function findAllWindows({ year, holidays, ptoBudget, today, limit = 14 }) {
+  const dayIdx = buildDayIndex(year, holidays);
+  const maxPerWindow = Math.min(ptoBudget, Math.max(12, Math.ceil(ptoBudget * 0.8)));
+  let startFromIdx = 0;
+  if (today) {
+    const todayISO = fmtISO(today);
+    const idx = dayIdx.list.findIndex(d => d.iso >= todayISO);
+    if (idx !== -1) startFromIdx = idx;
+  }
+  const cands = generateCandidates(dayIdx, maxPerWindow, startFromIdx)
+    .filter(c => c.ptoCost <= ptoBudget);
+
+  const byRatio = [...cands].sort((a, b) =>
+    b.ratio - a.ratio || b.totalDays - a.totalDays || a.ptoCost - b.ptoCost);
+
+  const overlaps = (c, list) =>
+    list.some(p => !(c.stretchEndIdx < p.stretchStartIdx - 1 || c.stretchStartIdx > p.stretchEndIdx + 1));
+
+  const picked = [];
+  for (const c of byRatio) {
+    if (picked.length >= limit) break;
+    if (overlaps(c, picked)) continue;
+    picked.push(c);
+  }
+  picked.sort((a, b) => a.stretchStartIdx - b.stretchStartIdx);
+
+  return {
+    dayIdx,
+    windows: picked.map((w, i) => ({ ...w, rank: i, theme: themeFor(w.totalDays) })),
+  };
+}
+
 export { parseISO, fmtISO, addDays, themeFor, buildDayIndex };
