@@ -63,18 +63,20 @@ function DayChip({ info, isPto }) {
 
 function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect }) {
   const tones = ['tone-sun', 'tone-coral', 'tone-teal'];
+  const isCustom = w.source === 'custom';
+  const toneClass = isCustom ? 'tone-custom' : tones[w.rank];
   const days = [];
   for (let i = w.stretchStartIdx; i <= w.stretchEndIdx; i++) days.push(dayIdx.list[i]);
   const ptoSet = new Set(w.ptoDays);
   const ratioRound = w.ratio.toFixed(1);
 
   return (
-    <div className={`window-card ${tones[w.rank]} ${expanded ? 'expanded' : ''} ${selected ? 'selected' : ''}`} onClick={onToggle}>
-      <div className="rank-pill">#{w.rank + 1}</div>
+    <div className={`window-card ${toneClass} ${expanded ? 'expanded' : ''} ${selected ? 'selected' : ''}`} onClick={onToggle}>
+      <div className="rank-pill">{isCustom ? '★ Custom' : `#${w.rank + 1}`}</div>
       {selected && <div className="picked-badge">✓ Picked</div>}
       <div className="theme-line">
         <span className="theme-emoji">{w.theme.emoji}</span>
-        <span>{w.theme.label}</span>
+        <span>{isCustom ? 'Your custom pick' : w.theme.label}</span>
       </div>
       <div className="total-days">{w.totalDays}<small>days off</small></div>
       <div className="date-range">{fmtDateRange(w.stretchStart, w.stretchEnd)}</div>
@@ -189,7 +191,7 @@ export function DestinationsSection({ trip: w, country }) {
   );
 }
 
-export default function WindowsSection({ windows, dayIdx, selectedTrip, onPickWindow }) {
+export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, onPickWindow }) {
   const [expanded, setExpanded] = useState(null);
   if (!windows.length) {
     return (
@@ -199,8 +201,6 @@ export default function WindowsSection({ windows, dayIdx, selectedTrip, onPickWi
       </div>
     );
   }
-  const isPicked = (w) => selectedTrip &&
-    selectedTrip.stretchStart === w.stretchStart && selectedTrip.stretchEnd === w.stretchEnd;
   return (
     <div className="windows-section">
       <div className="windows-header">
@@ -208,14 +208,17 @@ export default function WindowsSection({ windows, dayIdx, selectedTrip, onPickWi
         <span style={{fontSize:13, color:'var(--ink-mute)'}}>Click any card for breakdown</span>
       </div>
       <div className="windows-grid">
-        {windows.map(w => (
-          <WindowCard key={w.rank} window={w} dayIdx={dayIdx}
-            expanded={expanded === w.rank}
-            onToggle={() => setExpanded(expanded === w.rank ? null : w.rank)}
-            selected={isPicked(w)}
-            onSelect={() => onPickWindow(w)}
-          />
-        ))}
+        {windows.map(w => {
+          const k = keyOf(w);
+          return (
+            <WindowCard key={k} window={w} dayIdx={dayIdx}
+              expanded={expanded === k}
+              onToggle={() => setExpanded(expanded === k ? null : k)}
+              selected={selectedKey === k}
+              onSelect={() => onPickWindow(w)}
+            />
+          );
+        })}
       </div>
     </div>
   );

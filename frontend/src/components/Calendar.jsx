@@ -2,7 +2,7 @@ import { useMemo, useState, useRef } from 'react';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export default function CalendarHeatmap({ year, dayIdx, windows, today, selectedTrip, onSelectRange, onClearSelection }) {
+export default function CalendarHeatmap({ year, dayIdx, windows, today, customRange, onSelectRange, onClearSelection }) {
   const [tooltip, setTooltip] = useState(null);
   const [pendingStart, setPendingStart] = useState(null);
   const todayISO = today ? `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}` : null;
@@ -33,19 +33,21 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today, selected
 
   const windowMap = useMemo(() => {
     const m = {};
-    windows.forEach((w, i) => {
+    // Process the custom pick last so it wins any overlap with suggested windows.
+    const ordered = [...windows].sort((a, b) => (a.source === 'custom' ? 1 : 0) - (b.source === 'custom' ? 1 : 0));
+    ordered.forEach((w) => {
       for (let idx = w.stretchStartIdx; idx <= w.stretchEndIdx; idx++) {
         const info = dayIdx.list[idx];
         if (!info) continue;
         m[info.iso] = m[info.iso] || {};
-        m[info.iso].windowRank = i + 1;
+        m[info.iso].windowRank = w.colorKey;
         m[info.iso].windowTotalDays = w.totalDays;
         m[info.iso].windowPtoCost = w.ptoCost;
       }
       w.ptoDays.forEach(d => {
         m[d] = m[d] || {};
         m[d].isPto = true;
-        m[d].windowRank = i + 1;
+        m[d].windowRank = w.colorKey;
       });
     });
     return m;
@@ -91,12 +93,7 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today, selected
       if (wm.isPto) cls.push('pto-day');
       if (wm.windowRank) cls.push(`window-${wm.windowRank}`);
     }
-    if (pendingStart === iso) {
-      cls.push('sel-end');
-    } else if (selectedTrip && iso >= selectedTrip.stretchStart && iso <= selectedTrip.stretchEnd) {
-      cls.push('selected-range');
-      if (iso === selectedTrip.stretchStart || iso === selectedTrip.stretchEnd) cls.push('sel-end');
-    }
+    if (pendingStart === iso) cls.push('pending-start');
     return cls.join(' ');
   }
 
@@ -118,8 +115,8 @@ export default function CalendarHeatmap({ year, dayIdx, windows, today, selected
       <div className="cal-pick-hint">
         {pendingStart ? (
           <><span className="pick-dot pulsing"/>Now click the <b>end day</b> of your trip (start: {fmtLong(pendingStart)})</>
-        ) : selectedTrip ? (
-          <><span className="pick-dot done"/>Your dates: <b>{fmtLong(selectedTrip.stretchStart)} – {fmtLong(selectedTrip.stretchEnd)}</b>
+        ) : customRange ? (
+          <><span className="pick-dot done"/>Your custom pick: <b>{fmtLong(customRange.start)} – {fmtLong(customRange.end)}</b>
             <button className="pick-clear" onClick={clearSelection}>Clear</button></>
         ) : (
           <><span className="pick-dot"/>Pick your own dates: click a <b>start day</b>, then an <b>end day</b></>

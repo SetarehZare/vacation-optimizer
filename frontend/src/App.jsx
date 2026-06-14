@@ -37,7 +37,8 @@ export default function App() {
   const [tweaks,  setTweak]   = useTweaks(TWEAK_DEFAULTS);
   const [holidays, setHolidays] = useState([]);
   const [loading,  setLoading]  = useState(false);
-  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [customRange, setCustomRange] = useState(null);  // { start, end } ISO
+  const [selectedKey, setSelectedKey] = useState(null);  // which card is picked for destinations
 
   useEffect(() => {
     localStorage.setItem('vacopt', JSON.stringify({ country, region, pto, year }));
@@ -90,29 +91,52 @@ export default function App() {
   const efficiency = result.ptoUsed > 0 ? result.totalDaysOff / result.ptoUsed : 0;
   const pctSlider  = ((pto - 5) / 30) * 100;
 
-  // Clear any picked trip when the calendar year changes (dates no longer apply).
-  useEffect(() => { setSelectedTrip(null); }, [year]);
+  const keyOf = (w) => `${w.stretchStart}_${w.stretchEnd}`;
 
-  // Build a trip object from a custom date range chosen on the calendar.
-  function selectCustomRange(startISO, endISO) {
+  // Build a full window object from the user's custom date range — same shape
+  // as the optimizer's suggested windows, so it gets coloured and carded the
+  // exact same way (weekends, holidays, PTO, stretch, ratio, theme).
+  const customWindow = useMemo(() => {
+    if (!customRange) return null;
     const list = result.dayIdx.list;
-    const sIdx = list.findIndex(d => d.iso === startISO);
-    const eIdx = list.findIndex(d => d.iso === endISO);
-    if (sIdx === -1 || eIdx === -1) return;
-    let totalDays = 0, ptoCost = 0;
-    for (let i = sIdx; i <= eIdx; i++) { totalDays++; if (!list[i].isOff) ptoCost++; }
-    setSelectedTrip({
-      stretchStart: startISO, stretchEnd: endISO, totalDays, ptoCost,
-      theme: themeFor(totalDays), ratio: ptoCost > 0 ? totalDays / ptoCost : totalDays,
-      source: 'custom',
-    });
-  }
+    const sIdx = list.findIndex(d => d.iso === customRange.start);
+    const eIdx = list.findIndex(d => d.iso === customRange.end);
+    if (sIdx === -1 || eIdx === -1) return null;
+    const ptoDays = [];
+    for (let i = sIdx; i <= eIdx; i++) if (!list[i].isOff) ptoDays.push(list[i].iso);
+    const totalDays = eIdx - sIdx + 1;
+    const ptoCost = ptoDays.length;
+    return {
+      stretchStartIdx: sIdx, stretchEndIdx: eIdx,
+      stretchStart: list[sIdx].iso, stretchEnd: list[eIdx].iso,
+      ptoDays, totalDays, ptoCost,
+      ratio: ptoCost > 0 ? totalDays / ptoCost : totalDays,
+      theme: themeFor(totalDays), source: 'custom', colorKey: 'custom', rank: 'custom',
+    };
+  }, [customRange, result]);
 
-  // Pick one of the suggested windows (toggles off if already picked).
+  // Custom pick first, then the three suggested windows.
+  const allWindows = useMemo(() => {
+    const suggested = result.windows.map(w => ({ ...w, colorKey: w.rank + 1, source: 'suggested' }));
+    return customWindow ? [customWindow, ...suggested] : suggested;
+  }, [result, customWindow]);
+
+  const selectedTrip = allWindows.find(w => keyOf(w) === selectedKey) || null;
+
+  // Reset everything when the calendar year changes (dates no longer apply).
+  useEffect(() => { setCustomRange(null); setSelectedKey(null); }, [year]);
+
+  // Calendar range selection → create the custom window and pick it for destinations.
+  function selectCustomRange(start, end) {
+    setCustomRange({ start, end });
+    setSelectedKey(`${start}_${end}`);
+  }
+  function clearCustom() { setCustomRange(null); setSelectedKey(null); }
+
+  // Pick any card (suggested or custom) to show its destinations (toggles off).
   function pickWindow(w) {
-    setSelectedTrip(prev =>
-      prev && prev.stretchStart === w.stretchStart && prev.stretchEnd === w.stretchEnd
-        ? null : { ...w, source: 'window' });
+    const k = keyOf(w);
+    setSelectedKey(prev => prev === k ? null : k);
   }
 
   function handleShare() {
@@ -234,14 +258,14 @@ export default function App() {
         </div>
       )}
 
-      <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={result.windows} today={today}
-        selectedTrip={selectedTrip}
+      <CalendarHeatmap year={year} dayIdx={result.dayIdx} windows={allWindows} today={today}
+        customRange={customRange}
         onSelectRange={selectCustomRange}
-        onClearSelection={() => setSelectedTrip(null)}/>
+        onClearSelection={clearCustom}/>
 
       {tweaks.showWindowCards && (
-        <WindowsSection windows={result.windows} dayIdx={result.dayIdx}
-          selectedTrip={selectedTrip} onPickWindow={pickWindow}/>
+        <WindowsSection windows={allWindows} dayIdx={result.dayIdx}
+          selectedKey={selectedKey} keyOf={keyOf} onPickWindow={pickWindow}/>
       )}
 
       {selectedTrip && (

@@ -22,6 +22,7 @@
   --hm-holiday: oklch(0.82 0.1 70);
   --hm-pto: oklch(0.7 0.18 35);
   --hm-stretch: oklch(0.86 0.16 90);
+  --pick: #97e9e8;
 }
 
 * { box-sizing: border-box; }
@@ -109,9 +110,10 @@ input, select { font-family: inherit; }
 .day-cell.window-3 { box-shadow: inset 0 0 0 2px var(--teal); }
 .day-cell.window-1.pto-day, .day-cell.window-2.pto-day, .day-cell.window-3.pto-day { background: var(--hm-pto); }
 .day-cell.past { opacity: 0.28; filter: saturate(0.2); pointer-events: none; }
-.day-cell.selected-range { box-shadow: inset 0 0 0 1.5px var(--ink); }
-.day-cell.sel-end { background: var(--ink) !important; box-shadow: inset 0 0 0 1.5px var(--ink); }
-.day-cell.sel-end::after { display: none !important; }
+.day-cell.window-custom { box-shadow: inset 0 0 0 2px var(--pick); }
+.day-cell.window-custom.pto-day { background: var(--hm-pto); }
+.day-cell.pending-start { background: var(--pick) !important; box-shadow: inset 0 0 0 2px var(--pick), 0 0 0 2px var(--pick); }
+.day-cell.pending-start::after { display: none !important; }
 
 /* Calendar pick hint bar */
 .cal-pick-hint { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-soft); margin: 0 0 12px; flex-wrap: wrap; }
@@ -147,6 +149,7 @@ input, select { font-family: inherit; }
 .window-card.tone-sun   { background: linear-gradient(160deg, oklch(0.95 0.1 85) 0%, oklch(0.92 0.12 75) 100%); border-color: transparent; }
 .window-card.tone-coral { background: linear-gradient(160deg, oklch(0.95 0.06 35) 0%, oklch(0.9 0.1 30) 100%); border-color: transparent; }
 .window-card.tone-teal  { background: linear-gradient(160deg, oklch(0.93 0.05 200) 0%, oklch(0.88 0.08 195) 100%); border-color: transparent; }
+.window-card.tone-custom { background: linear-gradient(160deg, color-mix(in oklab, var(--pick) 35%, white) 0%, var(--pick) 100%); border-color: transparent; }
 .window-card .theme-line { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); opacity: 0.7; margin-bottom: 8px; }
 .window-card .theme-emoji { font-size: 20px; }
 .window-card .total-days { font-family: 'Bricolage Grotesque',serif; font-size: 56px; font-weight: 700; letter-spacing: -0.04em; line-height: 0.95; }
