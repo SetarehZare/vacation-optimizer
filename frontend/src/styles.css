@@ -160,7 +160,8 @@ input, select { font-family: inherit; }
 .window-card .theme-emoji { font-size: 20px; }
 .window-card .total-days { font-family: 'Bricolage Grotesque',serif; font-size: 56px; font-weight: 700; letter-spacing: -0.04em; line-height: 0.95; }
 .window-card .total-days small { font-size: 16px; font-weight: 500; color: var(--ink-soft); margin-left: 6px; }
-.window-card .date-range { font-size: 14px; color: var(--ink); margin-top: 6px; font-weight: 500; }
+.window-card .date-range { font-size: 14px; color: var(--ink); margin-top: 6px; font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.countdown-chip { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; background: oklch(1 0 0 / 0.5); color: var(--ink-soft); padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
 .window-card .efficiency { margin-top: 16px; display: flex; justify-content: space-between; align-items: end; padding-top: 14px; border-top: 1px solid oklch(0.5 0.04 60 / 0.15); }
 .window-card .eff-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--ink-soft); }
 .window-card .eff-value { font-family: 'Bricolage Grotesque',serif; font-size: 22px; font-weight: 700; color: var(--ink); }

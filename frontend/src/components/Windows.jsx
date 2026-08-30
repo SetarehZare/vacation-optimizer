@@ -79,6 +79,14 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect,
     setTimeout(() => setCopied(false), 1600);
   }
 
+  // How soon this trip starts, relative to today.
+  const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0);
+  const daysUntil = Math.round((new Date(w.stretchStart + 'T00:00') - todayMid) / 86400000);
+  const countdown = daysUntil > 1 ? `in ${daysUntil} days`
+    : daysUntil === 1 ? 'starts tomorrow'
+    : daysUntil === 0 ? 'starts today'
+    : null;
+
   return (
     <div className={`window-card ${toneClass} ${expanded ? 'expanded' : ''} ${selected ? 'selected' : ''}`} onClick={onToggle}>
       <div className="rank-pill">{w.pill}</div>
@@ -88,7 +96,10 @@ function WindowCard({ window: w, dayIdx, expanded, onToggle, selected, onSelect,
         <span>{isCustom ? 'Your custom pick' : w.theme.label}</span>
       </div>
       <div className="total-days">{w.totalDays}<small>days off</small></div>
-      <div className="date-range">{fmtDateRange(w.stretchStart, w.stretchEnd)}</div>
+      <div className="date-range">
+        {fmtDateRange(w.stretchStart, w.stretchEnd)}
+        {countdown && <span className="countdown-chip">{countdown}</span>}
+      </div>
       <div className="efficiency">
         <div>
           <div className="eff-label">PTO Spent</div>
