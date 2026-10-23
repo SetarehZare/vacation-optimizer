@@ -293,11 +293,15 @@ export default function WindowsSection({ windows, dayIdx, selectedKey, keyOf, on
       </div>
     );
   }
+  const totalDaysOff = windows.reduce((s, w) => s + w.totalDays, 0);
+  const totalPto = windows.reduce((s, w) => s + w.ptoCost, 0);
   return (
     <div className="windows-section">
       <div className="windows-header">
         <h2>{heading}</h2>
-        <span style={{fontSize:13, color:'var(--ink-mute)'}}>Click any card for breakdown</span>
+        <span style={{fontSize:13, color:'var(--ink-mute)'}}>
+          {windows.length} {windows.length === 1 ? 'window' : 'windows'} · {totalDaysOff} days off · {totalPto} PTO
+        </span>
       </div>
       <div className="windows-grid">
         {windows.map(w => {
